@@ -49,6 +49,10 @@
         		<div id="noStorageText"></div>
         		<input type="button" value="New Report" onclick="$.mobile.changePage('#reportPage');" />
         	</div>
+        	<div id="noReportsDiv" style="display: none;">
+        		<h3>Welcome to Air Safety Reporting!</h3>
+				<p>This application allows you to create reports about safety related events. To create a new report, clik 'new' below.</p>
+        	</div>
         	<ul id='reportList' data-role='listview' data-theme='c'>
         		<!-- List will be populated on pageload -->
         	</ul>
@@ -80,30 +84,24 @@
         </div> <!-- /footer -->
         
         <!-- UNSENT REPORTS -->
-		<div data-role="dialog" id="PU-sendUnsent">
+		<div data-role="popup" class="PU-sendUnsent" data-dismissable="false" data-corners="false">
 			<div data-role="content">
 				<h4>Unsent reports found</h4>
 				<p>Send now?</p>
 			</div>
-			<div data-role="footer" data-theme="c" data-dismissable="false" data-corners="false">
-	            <div data-role="navbar">
-	                <ul><li>
-	                        <a data-role="button" id="sendButton" href="#" data-rel="back"
-	                        data-icon="refresh" onclick="continueSendUnsent()">Send</a>
-	                    </li>
-	                    <li>
-	                        <a data-role="button" id="cancelButton" href="#" data-rel="back"
-	                        data-rel="back" data-icon="check">No thanks</a>
-	                    </li>
-	                </ul>
-	            </div>
-	        </div> <!-- /footer -->
+			<div data-role="footer" data-theme="c"> <div data-role="navbar">
+                <ul><li><a data-role="button" id="sendButton" href="#" data-rel="back"
+                           data-icon="check" onclick="continueSendUnsent()">Send</a>
+                </li><li><a data-role="button" id="cancelButton" href="#mainPage"
+                           	data-icon="home">No thanks</a>
+                </li></ul>
+            </div></div> <!-- /footer -->
 		</div> <!-- /no connection -->
 		
 		<!-- REPORT NOT SENT -->
 		<div data-role="popup" class="F-reportNotSent" data-theme="c">
 			<h4>Report not sent</h4>
-		</div>
+		</div>	
 		
 		<!-- INSTANT CONFIGURATION -->
 		<div data-role="popup" id="PU-domainForm" data-theme="d" data-dismissable="false">
@@ -119,10 +117,10 @@
 	<div data-role="page" id="reportPage" data-theme="e" data-title="Air Safety Report">
         
         <div data-role="header" data-position="fixed" data-theme="e">
-            <a onclick="$('#PU-sure').popup('open')" data-role="button" 
-            	href="#" data-icon="delete">Cancel</a>
+            <a onclick="$('#PU-sure').popup('open')" data-role="button" href="#" 
+            data-icon="delete" id="cancelReport">Cancel</a>
             <h1>Safety Report</h1>
-            <a data-role="button" class="ui-btn-right save" href="#"
+            <a data-role="button" class="ui-btn-right save" href="#" id="saveReport"
             data-transition="none" data-icon="check" onclick="saveReport();">Save</a>
         </div> <!-- /header -->
         
@@ -229,6 +227,21 @@
 			<h4>Report already submitted!</h4>
 		</div>
 		
+		<!-- UNSENT REPORTS -->
+		<div data-role="popup" class="PU-sendUnsent" data-dismissable="false" data-corners="false">
+			<div data-role="content">
+				<h4>Unsent reports found</h4>
+				<p>Send now?</p>
+			</div>
+			<div data-role="footer" data-theme="c"> <div data-role="navbar">
+                <ul><li><a data-role="button" id="sendButton" href="#" data-rel="back"
+                           data-icon="check" onclick="continueSendUnsent()">Send</a>
+                </li><li><a data-role="button" id="cancelButton" href="#mainPage"
+                           	data-icon="home">No thanks</a>
+                </li></ul>
+            </div></div> <!-- /footer -->
+		</div> <!-- /no connection -->
+		
 		<!-- REPORT SENT -->
 		<div data-role="popup" id="F-reportSent" data-theme="c">
 			<h4>Report submitted!</h4>
@@ -247,6 +260,7 @@
         </div> <!-- header -->
         
         <div data-role="content">
+        	<p id="pleaseConfigure" style="text-align: center, visibility: hidden;"><b>Please complete configuration!</b></p>
             <form id="configForm" action="#">
                 <div data-role="fieldcontain">
                     <label for="domain">Domain</label>
@@ -260,6 +274,10 @@
                     <label for="password">Password</label>
                     <input name="password" id="password" type="password"> <!-- value="wachtwoord"> -->
                 </div> <!---->
+                <div data-role="fieldcontain" style="visibility: hidden">
+                    <label for="processor">Password</label>
+                    <input name="processor" id="processor" type="text"> <!-- value="wachtwoord"> -->
+                </div>
                 <!-- <input type="submit" value="Submit"/> -->
             </form>
         </div> <!-- /content -->
@@ -288,9 +306,9 @@
         </div> <!-- /footer -->
         
         <!-- CONFIGURE APP -->
-		<div data-role="popup" id="PU-configureApp" data-theme="d">
-			<p><h4>Please fill out configuration</h4></p>
-		</div>   
+		<!-- <div data-role="popup" id="F-configureApp" data-theme="c">
+			<h4>Please fill out configuration</h4>
+		</div> -->  
 		
  	</div> <!-- /configPage -->
  	

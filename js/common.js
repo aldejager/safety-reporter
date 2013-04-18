@@ -130,6 +130,7 @@ function onDeviceReady() {		// Code to be executed once the device is finished l
 		// document.getElementById('reportStatus').value == 'sent'
 		if ($('#reportStatus').attr('value') == 'sent') {
 			flashPopup('#F-reportSubmitted',3000);
+			setTimeout(directionHandler,3500); 
 			return false;
 		}
 		
@@ -139,9 +140,6 @@ function onDeviceReady() {		// Code to be executed once the device is finished l
 		if (noStorage) config.domain = $('#submitDomain').val();
 		else saveReport('unsent');
 		
-		console.log("Domain assigned:");
-		console.log(config.domain);
-		
 		sendReport();
 		
 		return false;
@@ -150,7 +148,7 @@ function onDeviceReady() {		// Code to be executed once the device is finished l
 	// Show listed report once clicked
 	$('#reportList').on('click', 'li', function() {
 		currentReport = getStoredObject($(this)[0].id);
-		console.log(currentReport);
+		//console.log(currentReport);
 		index = currentReport.reportIndex;
 		$.mobile.changePage('#reportPage');
 	});
@@ -184,7 +182,7 @@ function onDeviceReady() {		// Code to be executed once the device is finished l
 } // Device Ready
 
 function sendUnsent() {
-	$('#PU-sendUnsent').popup('show');
+	$('.PU-sendUnsent').popup('open');
 }
 
 function continueSendUnsent() {	
@@ -210,9 +208,8 @@ function newReport() {		// only for !noStorage branch
 function saveReport(status) {
 	
 	if (status != undefined) {
-		console.log('saveReport status defined');
 		$('#reportStatus').val(status);
-	} else if ($('#reportStatus').attr('value').search('sent') == -1) {
+	} else if ($('#reportStatus').val().search('sent') == -1) {
 		$('#reportStatus').val('saved');
 	}
 	
@@ -231,24 +228,32 @@ function saveReport(status) {
 	$('#report').storeJSON(key);
 	
 	// if just saved, confirm success
-	if (status == 'saved') flashPopup('#PU-reportSaved',3000);
+	if (currentReport.reportStatus == 'saved') {
+		flashPopup('#F-reportSaved',3000);
+	}
 }
 
 function sendReport() {
 	var conn = checkConnection();	// check network connection
-	console.log(conn);
 	
+	console.log(conn);
 	switch(conn) {		// switch connection states
 		case 'fine':
+			console.log("connection fine: continue sending");
 			continueSending();
+			break;
 		case 'cond':
+			console.log("connection conditional: popup");
 			$('#PU-connectionConditional').popup('open');
 				// Continue: continueSending();
 				// Cancel:	 reportNotSent();
+			break;
 		default:
+			console.log("connection unavailable: popup");
 			$('#PU-noConnection').popup('open');
 				// Retry:	 sendReport();
 				// Cancel:	 reportNotSent();
+			break;
 	}
 }
 
@@ -256,7 +261,8 @@ function continueSending() {
 	
 	// Create destination address
 	var target = 'http://' + config.domain + config.processor;
-								
+	
+	console.log(config);							
 	console.log("Target for data:");
 	console.log(target);
 	
@@ -278,10 +284,9 @@ function continueSending() {
 		setTimeout(function() {
 			if(!noStorage) saveReport('sent');
 			resetCR();
-			console.log("reset?:");
-			console.log(currentReport);
-			if (unsent.length > 0) sendUnsent();
-			else directionHandler();
+			unsent = checkUnsentReports();
+			if (unsent.length > 0) {console.log("Unsent reports still there"); sendUnsent(); }
+			else {console.log("DH on success"); directionHandler();}
 		}, 4500);	
 	} else reportNotSent();
 	
@@ -289,6 +294,7 @@ function continueSending() {
 }
 
 function reportNotSent() {
+	console.log("DH on not sent");
 	directionHandler();
 	setTimeout(function() {
 		flashPopup('.F-reportNotSent',4000)
@@ -298,7 +304,8 @@ function reportNotSent() {
 function directionHandler() {
 	if (noStorage) $.mobile.changePage('#reportPage',
 		{allowSamePageTransition: true, transition: 'none'});
-	else $.mobile.changePage('#mainPage');
+	else $.mobile.changePage('#mainPage',
+		{allowSamePageTransition: true, transition: 'none'});
 }
 
 function resetCR() {
@@ -318,13 +325,13 @@ function loadReports() {
 		return false;
 	}
 	
+	console.log(checkLocalStorage(reportFileName));
 	if (checkLocalStorage(reportFileName) == 0) {
-		$('#mainPage [data-role="content"]')
-			.html("<h3>Welcome to Air Safety Reporting!</h3>" +
-				  "<p>This application allows you to create reports about safety related events." +
-				  "To create a new report, clik 'new' below.</p>");
+		console.log("No reports found");
+		$('#noReportsDiv').show();
+		$('#reportList').empty();
 		return false;
-	}
+	} else $('#noReportsDiv').hide();
 	
 	// Categorize reports and join results
 	var html ='', sentReports ='', savedReports = '', unsentReports = '';
@@ -337,11 +344,17 @@ function loadReports() {
         } 
     });
     
-    if (unsentReports.length == 0) unsentReports = "<li><p><b>No unsent reports</b></p></li>";
+    console.log("still running");
+    if (savedReports.length == 0)  	savedReports  	= "<li><p><b>No saved reports</b></p></li>";
+    if (unsentReports.length == 0) 	unsentReports 	= "<li><p><b>No unsent reports</b></p></li>";
+    if (sentReports.length == 0) 	sentReports 	= "<li><p><b>No sent reports</b></p></li>";
+    
+    console.log(savedReports);
     
     html = '<li data-role="list-divider" data-theme="e">Not submitted</li>' + savedReports + 
     	   '<li data-role="list-divider" data-theme="e">Not sent</li>' + unsentReports + 
-    	   '<li data-role="list-divider" data-theme="e">Completed</li>' + sentReports;
+    	   '<li data-role="list-divider" data-theme="e">Completed (' + 
+    	   		checkLocalStorage('-sent') + ')</li>' + sentReports;
     //console.log(html);
 
 	// Create listview from html item list
@@ -380,10 +393,7 @@ function fillFields(obj) {
     	$(elem).val(obj[key]);
     }
     
-    if (noStorage) {
-    	$('#submitDomain').val(obj['domain']);
-    	console.log($('#submitDomain').val());
-    }
+    if (noStorage) $('#submitDomain').val(obj['domain']);
 }
 
 function loadReportIndex() {
@@ -398,7 +408,7 @@ function loadReportIndex() {
 		if (dex > index) index = dex;
 	});
 	
-	console.log("index loaded: " + index);
+	//console.log("index loaded: " + index);
 }
 
 function checkConnection() {	// Checks current network status
@@ -415,19 +425,19 @@ function checkConnection() {	// Checks current network status
     states[Connection.NONE]     = 'No network connection'; */
 
 	// DEBUG: notify on network state
-    console.log("connection type: " + networkState);
+    // console.log("connection type: " + networkState);
     
     if (networkState != 'wifi' && networkState != 'ethernet') {
 		if (networkState.search('g') != -1) {
-			console.log("Any of the G's");
+			//console.log("Any of the G's");
 			return 'cond';
 		}
 		else {	// Inform user by prompt in the future
-			console.log("No suitable connection available");
+			//console.log("No suitable connection available");
 			return 'none';
 		}
 	}
-	else console.log("Wifi or ethernet available");
+	else //console.log("Wifi or ethernet available");
 	return 'fine';
 }
    
@@ -436,8 +446,8 @@ function checkConfiguration(type) {
 	
 	if (checkLocalStorage(configFileName) == 0) {
     	if (type == 'init') {
+    		$('#pleaseConfigure').show();
     		$.mobile.changePage('#configPage');
-    		setTimeout(function() {flashPopup('#PU-configureApp',5000)},1000);
     	}
     	return false;
  	} else {
@@ -456,6 +466,8 @@ function saveConfiguration() {
 		alert("Overwrite configuration!");
 	}
 	$('#configForm').storeJSON(key);
+	$('#pleaseConfigure').fadeOut(2000);
+	setTimeout(function() {$.mobile.changePage('#mainPage');},2000);
 }
 
 function checkUnsentReports() {		// returns array of unsent report keys
