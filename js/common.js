@@ -9,7 +9,7 @@ var noStorage = false;
 var index = null;
 var networkState = 'none';
 var unsent = new Array();
-//var destination = 'main';
+var sendingUnsent = false;
 
 // Set an onload handler to call the init function
 window.onload = init;
@@ -71,6 +71,7 @@ function onDeviceReady() {		// Code to be executed once the device is finished l
 	}
 	
 	$('#mainPage').on('pagebeforeshow', function() {
+		sendingUnsent = false;
 		loadReports();
 	}); /* */
 	
@@ -93,6 +94,7 @@ function onDeviceReady() {		// Code to be executed once the device is finished l
 				$('.formField').attr('readonly');
 				$('#saveReport').hide();
 				$('#cancelReport').hide();
+				$('#formSubmit').show();
 				//$('#formSubmit').attr('disabled', true);
 				console.log("sent report loaded");
 				break;
@@ -103,13 +105,16 @@ function onDeviceReady() {		// Code to be executed once the device is finished l
 				// inform the user that the report wasn't sent
 				$('#saveReport').hide();
 				$('#cancelReport').hide();
-				$('#reportPage :submit').val('Send');
+				$('#formSubmit').val('Send');
+				$('#formSubmit').show();
+				if (sendingUnsent) $('#formSubmit').hide();
 				break;
 			case 'saved': 	// report in progress
 				console.log("saved report loaded");
 				$('#report')[0].reset();
 				$('#saveReport').show();
 				$('#cancelReport').show();
+				$('#formSubmit').show();
 				fillFields(currentReport);
 				break;
 			default:	// create new report, use defaults, set only id
@@ -118,9 +123,11 @@ function onDeviceReady() {		// Code to be executed once the device is finished l
 				$('#saveReport').show();
 				$('#cancelReport').show();
 				console.log("Index of new report: " + index);
-				$('#reportIndex').val(index);			
+				$('#reportIndex').val(index);	
+				$('#formSubmit').show();		
 				break;
 		}}				
+	
 	}); // reporting page before show
 	
 	// Handle report submission
@@ -128,7 +135,9 @@ function onDeviceReady() {		// Code to be executed once the device is finished l
 		event.preventDefault();
 		
 		// document.getElementById('reportStatus').value == 'sent'
-		if ($('#reportStatus').attr('value') == 'sent') {
+		if ($('#reportStatus').val() == 'sent') {
+			console.log($('#reportStatus').val());
+			console.log($('#report').serializeObject());
 			flashPopup('#F-reportSubmitted',3000);
 			setTimeout(directionHandler,3500); 
 			return false;
@@ -185,16 +194,20 @@ function sendUnsent() {
 	$('.PU-sendUnsent').popup('open');
 }
 
-function continueSendUnsent() {	
-	unsent.forEach(function(key) {
-		currentReport = getStoredObject(key);
-		fillFields(currentReport);
-		index = $('#reportIndex').attr('value');
-		$.mobile.changePage('#reportPage', 
-		 	{allowSamePageTransition: true, transition: 'none'});
-		sendReport();
-	});
-	unsent = checkUnsentReports();
+function continueSendUnsent() {
+	sendingUnsent = true;	
+	var key = unsent[0];
+	console.log("Now sending report: " + key);
+	
+	currentReport = getStoredObject(key);
+	fillFields(currentReport);
+	index = $('#reportIndex').val();
+	console.log("report index: " + index);
+	
+	$.mobile.changePage('#reportPage', 
+	 	{allowSamePageTransition: true, transition: 'none'});
+	
+	sendReport();
 }
 
 function newReport() {		// only for !noStorage branch
@@ -262,7 +275,6 @@ function continueSending() {
 	// Create destination address
 	var target = 'http://' + config.domain + config.processor;
 	
-	console.log(config);							
 	console.log("Target for data:");
 	console.log(target);
 	
@@ -271,8 +283,10 @@ function continueSending() {
 	console.log("Data to be send:");
 	console.log(report);
 	
-	/*// perform some send action
-	$.post(target, report, function(data){	
+	// perform some send action
+	/*$.post(target, report, function(data){	
+		res = data.length;
+		console.log("Server return:");
 		console.log(data);
 	}); /* */
 	
@@ -280,14 +294,14 @@ function continueSending() {
 	var success = true;
 	
 	if (success) {
-		flashPopup('#F-reportSent',4000);
+		flashPopup('#F-reportSent',2000);
 		setTimeout(function() {
 			if(!noStorage) saveReport('sent');
-			resetCR();
+			resetCR(); sendingUnsent = false;
 			unsent = checkUnsentReports();
-			if (unsent.length > 0) {console.log("Unsent reports still there"); sendUnsent(); }
+			if (unsent.length > 0) {console.log("more unsent reports..."); continueSendUnsent(); }
 			else {console.log("DH on success"); directionHandler();}
-		}, 4500);	
+		}, 2000);	
 	} else reportNotSent();
 	
 	return false
@@ -317,17 +331,11 @@ function loadReports() {
 	
 	// If no storage or reports available, don't load reports
 	if (noStorage) {
-		//console.log("Pageload triggered");
 		$('#noStorageDiv').show();
-		$('#noStorageText').html("<h3>No storage available!</h3>" +
-				   "<p>To create a report click 'new', but be aware: " + 
-				   "reports cannot be stored.<br> <br> </p>");
 		return false;
 	}
 	
-	console.log(checkLocalStorage(reportFileName));
 	if (checkLocalStorage(reportFileName) == 0) {
-		console.log("No reports found");
 		$('#noReportsDiv').show();
 		$('#reportList').empty();
 		return false;
@@ -344,17 +352,16 @@ function loadReports() {
         } 
     });
     
-    console.log("still running");
     if (savedReports.length == 0)  	savedReports  	= "<li><p><b>No saved reports</b></p></li>";
+    else savedReports = ' (' + checkLocalStorage('saved') + ') </li>' + savedReports;
     if (unsentReports.length == 0) 	unsentReports 	= "<li><p><b>No unsent reports</b></p></li>";
+    else unsentReports = ' (' + checkLocalStorage('unsent') + ') </li>' + unsentReports;
     if (sentReports.length == 0) 	sentReports 	= "<li><p><b>No sent reports</b></p></li>";
+    else sentReports = ' (' + checkLocalStorage('-sent') + ') </li>' + sentReports;
     
-    console.log(savedReports);
-    
-    html = '<li data-role="list-divider" data-theme="e">Not submitted</li>' + savedReports + 
-    	   '<li data-role="list-divider" data-theme="e">Not sent</li>' + unsentReports + 
-    	   '<li data-role="list-divider" data-theme="e">Completed (' + 
-    	   		checkLocalStorage('-sent') + ')</li>' + sentReports;
+    html = '<li data-role="list-divider" data-theme="e">Not submitted' + savedReports + 
+    	   '<li data-role="list-divider" data-theme="e">Not sent' + unsentReports + 
+    	   '<li data-role="list-divider" data-theme="e">Completed' + sentReports;
     //console.log(html);
 
 	// Create listview from html item list

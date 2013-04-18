@@ -46,7 +46,8 @@
             
         <div data-role="content">
         	<div id="noStorageDiv" style="display: none;">
-        		<div id="noStorageText"></div>
+        		<h3>No storage available!</h3>
+        		<p>To create a report click 'new', but be aware: reports cannot be stored.<br> <br> </p>
         		<input type="button" value="New Report" onclick="$.mobile.changePage('#reportPage');" />
         	</div>
         	<div id="noReportsDiv" style="display: none;">
@@ -104,12 +105,12 @@
 		</div>	
 		
 		<!-- INSTANT CONFIGURATION -->
-		<div data-role="popup" id="PU-domainForm" data-theme="d" data-dismissable="false">
+		<!-- <div data-role="popup" id="PU-domainForm" data-theme="d" data-dismissable="false">
 			<h4>Please enter domain for form submission:</h4>
             <input name="domain" id="domainFromDialog" type="text" value="eg: subdomain.domain.com">
             <a data-role="button" id="domainSubmit" href="#" data-rel="back" data-icon="check"
             	onclick="config.domain=$('domainFromDialog').attr('value');">Continue</a> 
-        </div>     
+        </div> -->     
         
 	</div> <!-- /mainPage -->
 	
@@ -305,11 +306,6 @@
             </div>
         </div> <!-- /footer -->
         
-        <!-- CONFIGURE APP -->
-		<!-- <div data-role="popup" id="F-configureApp" data-theme="c">
-			<h4>Please fill out configuration</h4>
-		</div> -->  
-		
  	</div> <!-- /configPage -->
  	
  	<!-- TEST PAGE -->
