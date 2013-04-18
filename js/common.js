@@ -16,7 +16,7 @@ window.onload = init;
 
 function init() {				// Runs when DOM has finished loading
 	
-	if (Modernizr.localstorage) {
+	if (!Modernizr.localstorage) {
 		noStorage = true;
 		$('.save').hide();
 		$('.nav').hide();
