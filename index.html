@@ -2,13 +2,12 @@
 <html>
 <head> 		<!-- FILE HEAD -->
 	
-	<title>Aviation Safety Reporting App</title>
+	<title>AviAssist Safety Reporting App</title>
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 	<script type="text/javascript" charset="utf-8"> </script>
 	
 	<link rel="stylesheet" href="css/jquery.mobile-1.3.0.css">
-	<!-- <link rel="stylesheet" href="css/simpledialog.css"> -->
 	
 	<script src="js/modernizr.js"></script>
 	<script src="cordova.js"></script>
@@ -16,21 +15,20 @@
 	<script src="js/json2.js"></script>
 	<script src="js/jquery-1.9.1.js"></script>
   	<script src="js/jquery.mobile-1.3.0.js"></script>
-  	<!-- <script src="js/bpopup.js"></script> -->
   	  	
   	<script>	// Global definitions
   	
   		// Default configuration data object
-  		var config = {	domain:    "safety.futuredreamsunlimited.com",
-  					  	username:  "safety@futuredreamsunlimited.com",
-  					  	password:  "foo",
+  		var config = {	domain:    "reporting.aviassist.org",
+  					  	firstname: "Arnold",
+  					  	lastname:  "de Jager",
   					  	processor: "/asr-processor.php"};
   					  	
 		// Current report object
   		var currentReport = {};  
   					  	
   		// LocalStorage naming
-  		var configFileName = 'config';
+  		var configFileName = 'safety-app-config';
   		var reportFileName = 'ASR-';	 // dash included for index separation	
   		
 		//var reportStatus = ['new','sent','saved','unsent'];
@@ -44,6 +42,7 @@
 	<!-- MAIN PAGE -->
 	<div data-role="page" id="mainPage" data-theme="e" data-title="ASR - Home">
             
+        <img src='Logo.jpg' width='98%'/>
         <div data-role="content">
         	<div id="noStorageDiv" style="display: none;">
         		<h3>No storage available!</h3>
@@ -51,8 +50,8 @@
         		<input type="button" value="New Report" onclick="$.mobile.changePage('#reportPage');" />
         	</div>
         	<div id="noReportsDiv" style="display: none;">
-        		<h3>Welcome to Air Safety Reporting!</h3>
-				<p>This application allows you to create reports about safety related events. To create a new report, clik 'new' below.</p>
+        		<h3>Welcome to AviAssist Safety Reporting App!</h3>
+				<p>ASRA allows you to create reports about safety related events. To create a report, clik 'new' below.</p>
         	</div>
         	<ul id='reportList' data-role='listview' data-theme='c'>
         		<!-- List will be populated on pageload -->
@@ -65,21 +64,20 @@
                     <li>
                         <a data-role="button" class="ui-btn-active" id="homeButton" 
                         href="#" data-transition="none" data-icon="home" 
-                        onclick="$.mobile.changePage('#mainPage', {allowSamePageTransition: true,
-                        										   transition: 'none'});">Home</a>
+                        onclick="directionHandler()">Home</a>
                     </li>
                     <li>
                         <a data-role="button" id="reportButton" href="#" data-transition="none"
-                        data-icon="plus" onclick="newReport()">New</a>
+                        data-icon="plus" onclick="newReport()">New Report</a>
                     </li>
                     <li>
                         <a data-role="button" id="configButton" href="#configPage" data-transition="none"
                         data-icon="gear">Configure</a>
                     </li>
-                    <li>
+                    <!--<li>
                         <a data-role="button" id="testButton" href="#testPage" data-transition="none"
                         data-icon="alert">Test</a>
-                    </li>
+                    </li>-->
                 </ul>
             </div>
         </div> <!-- /footer -->
@@ -102,7 +100,12 @@
 		<!-- REPORT NOT SENT -->
 		<div data-role="popup" class="F-reportNotSent" data-theme="c">
 			<h4>Report not sent</h4>
-		</div>	
+		</div>
+		
+		<!-- REPORT SENT -->
+		<div data-role="popup" id="F-reportSent" class="F-reportSent" data-theme="c">
+			<h4>Report submitted!</h4>
+		</div>
 		
 		<!-- INSTANT CONFIGURATION -->
 		<!-- <div data-role="popup" id="PU-domainForm" data-theme="d" data-dismissable="false">
@@ -135,12 +138,38 @@
                     <input name="domain" id="submitDomain" class="formField" type="text">
                 </div>
             	<div data-role="fieldcontain">
-                    <label for="name">Name</label>
-                    <input name="name" id="name" class="formField" type="text">
+                    <label for="date">Date of occurrence</label>
+                    <input name="date" id="date" class="formField" type="date">
                 </div>
-                <div data-role="fieldcontain"> <!---->
-                    <label for="message">Message</label>
-                    <input name="message" id="message" class="formField" type="text">
+                <div data-role="fieldcontain">
+                    <label for="time">Time of occurrence (hh:mm AM/PM)</label>
+                    <input name="time" id="time" class="formField" type="time">
+                </div>
+                <div data-role="fieldcontain">
+                    <label for="aircraft">Aircraft</label>
+                    <input name="aircraft" id="aircraft" class="formField" list="acs">
+                    <datalist id="acs">
+                    	<option value="XXX">
+                    	<option value="YYY">
+                    	<option value="ZZZ">
+                    </datalist>
+                </div>
+                <div data-role="fieldcontain">
+                    <label for="location">Location</label>
+                    <input name="location" id="location" class="formField" list="airfields">
+                    <datalist id="airfields">
+					  <option value="LUN">
+					  <option value="JNB">
+					  <option value="HRE">
+					  <option value="NLA">
+					  <option value="DAR">
+					</datalist>
+                </div>
+                <div data-role="fieldcontain">
+                    <label for="description">Description of event</label>
+                    <!--<input name="description" id="description" class="formField" type="text">-->
+                    <textarea name="description" id="description" class="formField" rows="8"
+                    	>Please provide a description of the event here...</textarea>
                 </div>
                 <input type="submit" id="formSubmit" value="Submit"/>
             </form>
@@ -151,7 +180,7 @@
                 <ul>
                     <li>
                         <a data-role="button" id="homeButton" href="#" data-transition="none" data-icon="home" 
-                        onclick="$('#PU-sure').popup('open')">Home</a>
+                        onclick="goHome()">Home</a>
                     </li>
                     <li>
                         <a data-role="button" class="ui-btn-active" id="reportButton" href="#"
@@ -161,10 +190,10 @@
                         <a data-role="button" id="configButton" href="#configPage" data-transition="none"
                         data-icon="gear">Configure</a>
                     </li>
-                    <li>
+                    <!-- <li>
                         <a data-role="button" id="testButton" href="#testPage" data-transition="none" 
                         data-icon="alert">Test</a>
-                    </li>
+                    </li> -->
                 </ul>
             </div>
         </div> <!-- /footer -->
@@ -172,8 +201,8 @@
         <!-- ARE YOU SURE? -> works.. -->
 		<div data-role="popup" id="PU-sure" data-dismissable="false" data-corners="false">
 			<div data-role="content">
-				<h4>Are you sure?</h4>
-				<p>Data might be lost!</p>
+				<h4>Did you save the report?</h4>
+				<p>Or continue anyway?</p>
 			</div>
 			<div data-role="footer" data-theme="c"> <div data-role="navbar">
                 <ul><li><a data-role="button" id="yes" href="#" data-icon="check">Yes</a>
@@ -244,7 +273,7 @@
 		</div> <!-- /no connection -->
 		
 		<!-- REPORT SENT -->
-		<div data-role="popup" id="F-reportSent" data-theme="c">
+		<div data-role="popup" id="F-reportSent" class="F-reportSent" data-theme="c">
 			<h4>Report submitted!</h4>
 		</div>
         
@@ -261,22 +290,25 @@
         </div> <!-- header -->
         
         <div data-role="content">
-        	<p id="pleaseConfigure" style="text-align: center, visibility: hidden;"><b>Please complete configuration!</b></p>
+        	<p id="pleaseConfigure" style="display: none;">
+        		<b>Please complete configuration!</b>
+        		<br>Press save when done.	
+        	</p>
             <form id="configForm" action="#">
-                <div data-role="fieldcontain">
-                    <label for="domain">Domain</label>
-                    <input name="domain" id="domain" type="text"> <!-- value="domein"> -->
+                <div data-role="fieldcontain"> <!---->
+                    <label for="firstname">First Name</label>
+                    <input name="firstname" id="firstname" type="text"> <!-- value="gebruiker"> -->
                 </div>
                 <div data-role="fieldcontain"> <!---->
-                    <label for="username">Username</label>
-                    <input name="username" id="username" type="text"> <!-- value="gebruiker"> -->
+                    <label for="lastname">Last Name</label>
+                    <input name="lastname" id="lastname" type="text"> <!-- value="gebruiker"> -->
                 </div>
                 <div data-role="fieldcontain">
-                    <label for="password">Password</label>
-                    <input name="password" id="password" type="password"> <!-- value="wachtwoord"> -->
-                </div> <!---->
+                    <label for="domain">Report Server Domain</label>
+                    <input name="domain" id="domain" type="text"> <!-- value="domein"> -->
+                </div>
                 <div data-role="fieldcontain" style="visibility: hidden">
-                    <label for="processor">Password</label>
+                    <label for="processor">Processor</label>
                     <input name="processor" id="processor" type="text"> <!-- value="wachtwoord"> -->
                 </div>
                 <!-- <input type="submit" value="Submit"/> -->
@@ -298,10 +330,10 @@
                         <a data-role="button" class="ui-btn-active" id="configButton" href="#configPage"
                         data-transition="none" data-icon="gear">Configure</a>
                     </li>
-                    <li>
+                    <!-- <li>
                         <a data-role="button" id="testButton" href="#testPage" data-transition="none" 
                         data-icon="alert">Test</a>
-                    </li>
+                    </li> -->
                 </ul>
             </div>
         </div> <!-- /footer -->

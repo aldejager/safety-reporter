@@ -1,5 +1,8 @@
 // Global variable that will tell us whether PhoneGap is ready
 
+// TODO: smooth unsent report sending routine, pop-ups don't show or there is no transition'
+
+
 // Initiation parameters
 var intervalID = null;
 var readyCount = 0;
@@ -105,7 +108,6 @@ function onDeviceReady() {		// Code to be executed once the device is finished l
 				// inform the user that the report wasn't sent
 				$('#saveReport').hide();
 				$('#cancelReport').hide();
-				$('#formSubmit').val('Send');
 				$('#formSubmit').show();
 				if (sendingUnsent) $('#formSubmit').hide();
 				break;
@@ -120,6 +122,10 @@ function onDeviceReady() {		// Code to be executed once the device is finished l
 			default:	// create new report, use defaults, set only id
 				console.log("new report page loaded");
 				$('#report')[0].reset();
+				$('#reportIndex').val('-');
+				$('#reportStatus').val('new');
+				$('#date').val(new Date().toJSON().slice(0,10));
+				//console.log($('#reportStatus').val());
 				$('#saveReport').show();
 				$('#cancelReport').show();
 				console.log("Index of new report: " + index);
@@ -207,7 +213,8 @@ function continueSendUnsent() {
 	$.mobile.changePage('#reportPage', 
 	 	{allowSamePageTransition: true, transition: 'none'});
 	
-	sendReport();
+	setTimeout(function() {sendReport();} ,500);
+	
 }
 
 function newReport() {		// only for !noStorage branch
@@ -225,6 +232,8 @@ function saveReport(status) {
 	} else if ($('#reportStatus').val().search('sent') == -1) {
 		$('#reportStatus').val('saved');
 	}
+	
+	console.log($(reportStatus));
 	
 	var old_key = false;
 	Object.keys(localStorage).forEach(function(key) {
@@ -294,17 +303,18 @@ function continueSending() {
 	var success = true;
 	
 	if (success) {
-		flashPopup('#F-reportSent',2000);
+		flashPopup('.F-reportSent',2000);
 		setTimeout(function() {
 			if(!noStorage) saveReport('sent');
+			console.log('saving sent report');
 			resetCR(); sendingUnsent = false;
 			unsent = checkUnsentReports();
 			if (unsent.length > 0) {console.log("more unsent reports..."); continueSendUnsent(); }
 			else {console.log("DH on success"); directionHandler();}
-		}, 2000);	
+		}, 2500);	
 	} else reportNotSent();
 	
-	return false
+	//return false
 }
 
 function reportNotSent() {
@@ -313,6 +323,12 @@ function reportNotSent() {
 	setTimeout(function() {
 		flashPopup('.F-reportNotSent',4000)
 	}, 1000);
+}
+
+function goHome() {
+	if (currentReport.reportStatus == undefined || $('#reportStatus').val().search('sent') != -1) 
+		directionHandler();
+	else $('#PU-sure').popup('open');
 }
 
 function directionHandler() {
@@ -345,8 +361,9 @@ function loadReports() {
 	var html ='', sentReports ='', savedReports = '', unsentReports = '';
 	Object.keys(localStorage).forEach(function(key) {
     	if (key.search(reportFileName) != -1) {
-    		item = '<li id=' + key + '><a href="#">' + getStoredObject(key).message + '</a></li>';
-    		if (key.search("-sent") != -1) sentReports += item;
+    		var obj = getStoredObject(key);
+    		item = '<li id=' + key + '><a href="#">' + obj.date + ' ' + obj.time + ' at ' + obj.location + '</a></li>';
+    		if (key.search("-sent") != -1) sentReports = item + sentReports;
     		else if (key.search("unsent") != -1) unsentReports += item;
            	else savedReports += item;
         } 
