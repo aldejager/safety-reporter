@@ -1,5 +1,11 @@
 <!DOCTYPE HTML>
 <html>
+	
+	<!-- TODO: 
+		- Allow report deletion 
+		- Show 'un/sent' reports not as form 
+	/todo -->
+	
 <head> 		<!-- FILE HEAD -->
 	
 	<title>AviAssist Safety Reporting App</title>
@@ -50,9 +56,10 @@
         		<input type="button" value="New Report" onclick="$.mobile.changePage('#reportPage');" />
         	</div>
         	<div id="noReportsDiv" style="display: none;">
-        		<h3>Welcome to AviAssist Safety Reporting App!</h3>
-				<p>ASRA allows you to create reports about safety related events. To create a report, clik 'new' below.</p>
-        	</div>
+        		<p align="center"><br>Welcome to the</p>
+        		<h3 align="center">AviAssist Safety Reporting App!</h3>
+				<p align="center">ASRA allows you to create reports about safety related events. To create a report,<br>clik 'new' below.</p>
+			</div>
         	<ul id='reportList' data-role='listview' data-theme='c'>
         		<!-- List will be populated on pageload -->
         	</ul>
